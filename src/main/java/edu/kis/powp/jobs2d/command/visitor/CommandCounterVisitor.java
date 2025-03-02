@@ -9,47 +9,45 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class CommandCounterVisitor implements CommandVisitor {
-    
-    private Map<String, Integer> allCommandsCounter = new HashMap<>();
+public class CommandCounterVisitor implements CommandVisitor<Map<String, Integer>> {
 
-    
-
-    @Override
-    public void visit(SetPositionCommand command) {
-       
-        incrementCommandsCounter(command.getClass().getSimpleName());
-    }
-    
-    public void incrementCommandsCounter(String command) {
-        
-    	allCommandsCounter.merge(command, 1, Integer::sum);
+    // Helper method to merge two count maps.
+    private Map<String, Integer> merge(Map<String, Integer> map1, Map<String, Integer> map2) {
+        Map<String, Integer> merged = new HashMap<>(map1);
+        for (Map.Entry<String, Integer> entry : map2.entrySet()) {
+            merged.merge(entry.getKey(), entry.getValue(), Integer::sum);
+        }
+        return merged;
     }
 
     @Override
-    public void visit(OperateToCommand command) {
-        
-        incrementCommandsCounter(command.getClass().getSimpleName());
+    public Map<String, Integer> visit(SetPositionCommand command) {
+        Map<String, Integer> result = new HashMap<>();
+        result.put(command.getClass().getSimpleName(), 1);
+        return result;
     }
 
     @Override
-    public void visit(ICompoundCommand command) {
+    public Map<String, Integer> visit(OperateToCommand command) {
+        Map<String, Integer> result = new HashMap<>();
+        result.put(command.getClass().getSimpleName(), 1);
+        return result;
+    }
+
+    @Override
+    public Map<String, Integer> visit(ICompoundCommand command) {
+        // Start with an empty map.
+        Map<String, Integer> result = new HashMap<>();
+
+        // Optionally, if you want to count the compound command itself, you could uncomment the following:
+        // result.put(command.getClass().getSimpleName(), 1);
         Iterator<DriverCommand> commandListIterator = command.iterator();
         while(commandListIterator.hasNext())
         {
             DriverCommand cmd = commandListIterator.next();
-            incrementCommandsCounter(cmd.getClass().getSimpleName());
-           
+            Map<String, Integer> subResult = cmd.accept(this);
+            result = merge(result, subResult);
         }
+        return result;
     }
-
-    @Override
-    public String toString() {
-        StringBuilder commands = new StringBuilder();
-        for (Map.Entry<String, Integer> entry : allCommandsCounter.entrySet()) {
-        	commands.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-        }
-        return commands.toString();
-    }
-
 }

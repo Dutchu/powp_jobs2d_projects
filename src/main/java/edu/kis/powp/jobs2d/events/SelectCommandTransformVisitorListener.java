@@ -27,9 +27,7 @@ public class SelectCommandTransformVisitorListener implements ActionListener {
         }
 
         CommandTransformationVisitor commandVisitor = new CommandTransformationVisitor(this.transformationMethod);
-        command.accept(commandVisitor);
-
-        DriverCommand transformedCommand = commandVisitor.getVisitedCommand();
+        DriverCommand transformedCommand = command.accept(commandVisitor);
         manager.setCurrentCommand(transformedCommand);
     }
 }

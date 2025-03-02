@@ -248,7 +248,7 @@ public class CommandManagerWindow extends JFrame implements WindowComponent {
     }
 
     public void updateVisitorFields() {
-        visitorFieldListString = commandManager.getVisitorString();
+        visitorFieldListString = commandManager.getVisitorMessages();
         visitorField.setText(visitorFieldListString);
     }
 

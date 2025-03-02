@@ -45,7 +45,7 @@ public class CanvasFeature {
             mainMenu.add(groupMenu);
         }
 
-        addDriverDecorator("Canvas restiction");
+        addDriverDecorator("Canvas restriction");
     }
 
     public static void setCanvases(List<ICanvas> canvases) {

@@ -16,5 +16,5 @@ public interface DriverCommand {
     public void execute(Job2dDriver driver);
 
     public DriverCommand copy();
-    public void accept(CommandVisitor visitor);
+    <R> R accept(CommandVisitor<R> visitor);
 }

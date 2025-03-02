@@ -6,32 +6,29 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class CompoundCommandCopyVisitor implements CommandVisitor {
+public class CompoundCommandCopyVisitor implements CommandVisitor<DriverCommand> {
     private DriverCommand copiedCommand;
 
     @Override
-    public void visit(OperateToCommand command) {
-        copiedCommand = new OperateToCommand(command.getPosX(), command.getPosY());
+    public DriverCommand visit(OperateToCommand command) {
+        return new OperateToCommand(command.getPosX(), command.getPosY());
     }
 
     @Override
-    public void visit(SetPositionCommand command) {
-        copiedCommand = new SetPositionCommand(command.getPosX(), command.getPosY());
+    public DriverCommand visit(SetPositionCommand command) {
+        return new SetPositionCommand(command.getPosX(), command.getPosY());
     }
 
-    public void visit(ICompoundCommand command) {
+    @Override
+    public DriverCommand visit(ICompoundCommand command) {
         List<DriverCommand> copiedCommandList = new ArrayList<>();
         Iterator<DriverCommand> iterator = command.iterator();
         while (iterator.hasNext()) {
-            DriverCommand cmd = iterator.next();
-            cmd.accept(this);
-            copiedCommandList.add(copiedCommand);
+            DriverCommand subCommand = iterator.next();
+            // Recursively copy each sub-command
+            DriverCommand copiedSubCommand = subCommand.accept(this);
+            copiedCommandList.add(copiedSubCommand);
         }
-        copiedCommand = new CompoundCommand(copiedCommandList, command.toString());
+        return new CompoundCommand(copiedCommandList, command.toString());
     }
-
-    public DriverCommand getCopiedCommand() {
-        return copiedCommand;
-    }
-
 }

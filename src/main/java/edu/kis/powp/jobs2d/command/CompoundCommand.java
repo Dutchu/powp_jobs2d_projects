@@ -39,7 +39,7 @@ public final class CompoundCommand implements ICompoundCommand {
     }
 
     @Override
-    public void accept(CommandVisitor visitor) {
-        visitor.visit(this);
+    public <R> R accept(CommandVisitor<R> visitor) {
+        return visitor.visit(this);
     }
 }

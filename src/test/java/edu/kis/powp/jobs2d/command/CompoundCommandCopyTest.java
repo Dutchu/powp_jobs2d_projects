@@ -15,8 +15,7 @@ public class CompoundCommandCopyTest {
         CompoundCommand compoundCommand2 = getCompoundCommand();
 
         CompoundCommandCopyVisitor visitor = new CompoundCommandCopyVisitor();
-        compoundCommand2.accept(visitor);
-        CompoundCommand result = (CompoundCommand) visitor.getCopiedCommand();
+        CompoundCommand result = (CompoundCommand) compoundCommand2.accept(visitor);
 
         assertNotSame(compoundCommand2, result);
 

@@ -8,43 +8,37 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class CommandTransformationVisitor implements CommandVisitor {
+public class CommandTransformationVisitor implements CommandVisitor<DriverCommand> {
 
     private final TransformationMethod transformationMethod;
-    private DriverCommand visitedCommand;
 
-    public CommandTransformationVisitor(TransformationMethod transformationMethod){
+    public CommandTransformationVisitor(TransformationMethod transformationMethod) {
         this.transformationMethod = transformationMethod;
     }
 
-    public DriverCommand getVisitedCommand() {
-        return visitedCommand;
-    }
-
     @Override
-    public void visit(SetPositionCommand command) {
+    public DriverCommand visit(SetPositionCommand command) {
         TransformationPoint transformedPoint = transformPoint(command.getPosX(), command.getPosY());
-        visitedCommand = new SetPositionCommand(transformedPoint.getX(), transformedPoint.getY());
+        return new SetPositionCommand(transformedPoint.getX(), transformedPoint.getY());
     }
 
     @Override
-    public void visit(OperateToCommand command) {
+    public DriverCommand visit(OperateToCommand command) {
         TransformationPoint transformedPoint = transformPoint(command.getPosX(), command.getPosY());
-        visitedCommand = new OperateToCommand(transformedPoint.getX(), transformedPoint.getY());
+        return new OperateToCommand(transformedPoint.getX(), transformedPoint.getY());
     }
 
     @Override
-    public void visit(ICompoundCommand command) {
-        Iterator<DriverCommand> iterator = command.iterator();
+    public DriverCommand visit(ICompoundCommand command) {
         List<DriverCommand> commandsList = new ArrayList<>();
-
+        Iterator<DriverCommand> iterator = command.iterator();
         while (iterator.hasNext()) {
-            DriverCommand driverCommand = iterator.next();
-            driverCommand.accept(this);
-            commandsList.add(visitedCommand);
+            DriverCommand subCommand = iterator.next();
+            // Recursively transform the sub-command
+            DriverCommand transformedSubCommand = subCommand.accept(this);
+            commandsList.add(transformedSubCommand);
         }
-
-        visitedCommand = new CompoundCommand(commandsList, command.toString());
+        return new CompoundCommand(commandsList, command.toString());
     }
 
     private TransformationPoint transformPoint(int x, int y) {

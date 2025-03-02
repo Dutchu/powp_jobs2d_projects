@@ -1,10 +1,11 @@
 package edu.kis.powp.jobs2d.command.manager;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import edu.kis.powp.jobs2d.command.CompoundCommand;
 import edu.kis.powp.jobs2d.command.DriverCommand;
+import edu.kis.powp.jobs2d.command.visitor.CommandBoundaryVisitor;
+import edu.kis.powp.jobs2d.command.visitor.CommandCounterVisitor;
 import edu.kis.powp.jobs2d.command.visitor.CommandVisitor;
 import edu.kis.powp.observer.Publisher;
 
@@ -14,10 +15,11 @@ import edu.kis.powp.observer.Publisher;
 public class DriverCommandManager {
     private DriverCommand currentCommand = null;
     private Publisher changePublisher = new Publisher();
-    private List<CommandVisitor> visitorList= new ArrayList<CommandVisitor>();
+    private final CommandVisitor<Map<String, Integer>> countingVisitor = new CommandCounterVisitor();
+    private final CommandVisitor<Boolean> boundaryVisitor = new CommandBoundaryVisitor();
     /**
      * Set current command.
-     * 
+     *
      * @param commandList Set the command as current.
      */
     public synchronized void setCurrentCommand(DriverCommand commandList) {
@@ -27,16 +29,17 @@ public class DriverCommandManager {
 
     /**
      * Set current command.
-     * 
+     *
      * @param commandList list of commands representing a compound command.
      * @param name        name of the command.
      */
     public synchronized void setCurrentCommand(List<DriverCommand> commandList, String name) {
-        setCurrentCommand(new CompoundCommand(commandList, name));}
+        setCurrentCommand(new CompoundCommand(commandList, name));
+    }
 
     /**
      * Return current command.
-     * 
+     *
      * @return Current command.
      */
     public synchronized DriverCommand getCurrentCommand() {
@@ -54,24 +57,19 @@ public class DriverCommandManager {
             return getCurrentCommand().toString();
     }
 
-    public synchronized void addVisitor(CommandVisitor visitor) {
-        this.visitorList.add(visitor);
-    }
+//    public synchronized void addVisitor(CommandVisitor<StringBuilder> visitor) {
+//        this.loggingVisitors.add(visitor);
+//    }
 
-    public synchronized String getVisitorString() {
-        if (getCurrentCommand() == null || visitorList == null) {
-            return "No visitor loaded";
+    public synchronized String getVisitorMessages() {
+        StringBuilder result = new StringBuilder();
+        if (getCurrentCommand() == null) {
+            result.append("No command loaded");
         } else {
-            for (CommandVisitor v : visitorList) {
-                getCurrentCommand().accept(v);
-            }
-            StringBuilder visitorString = new StringBuilder();
-            for (CommandVisitor v : visitorList) {
-                visitorString.append(v.toString()).append("\n");
-            }
-            visitorList.clear();
-            return visitorString.toString();
+            result.append("Counted Visits: ").append(getCurrentCommand().accept(countingVisitor)).append("\n");
+            result.append("Is Command within Canvas boundaries").append(": ").append(getCurrentCommand().accept(boundaryVisitor)).append("\n");
         }
+        return result.toString();
     }
 
     public Publisher getChangePublisher() {
