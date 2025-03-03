@@ -7,6 +7,9 @@ import edu.kis.powp.jobs2d.command.DriverCommand;
 import edu.kis.powp.jobs2d.command.visitor.CommandBoundaryVisitor;
 import edu.kis.powp.jobs2d.command.visitor.CommandCounterVisitor;
 import edu.kis.powp.jobs2d.command.visitor.CommandVisitor;
+import edu.kis.powp.jobs2d.command.visitor.observer.BoundaryVisitorSubscriber;
+import edu.kis.powp.jobs2d.command.visitor.observer.CommandVisitorSubscriber;
+import edu.kis.powp.jobs2d.command.visitor.observer.CounterVisitorSubscriber;
 import edu.kis.powp.observer.Publisher;
 
 /**
@@ -15,8 +18,13 @@ import edu.kis.powp.observer.Publisher;
 public class DriverCommandManager {
     private DriverCommand currentCommand = null;
     private Publisher changePublisher = new Publisher();
-    private final CommandVisitor<Map<String, Integer>> countingVisitor = new CommandCounterVisitor();
-    private final CommandVisitor<Boolean> boundaryVisitor = new CommandBoundaryVisitor();
+    private final List<CommandVisitorSubscriber> visitorSubscribers = new ArrayList<>();
+    // Constructor to add default subscribers
+    public DriverCommandManager() {
+        visitorSubscribers.add(new BoundaryVisitorSubscriber());
+        visitorSubscribers.add(new CounterVisitorSubscriber());
+    }
+    
     /**
      * Set current command.
      *
@@ -24,7 +32,14 @@ public class DriverCommandManager {
      */
     public synchronized void setCurrentCommand(DriverCommand commandList) {
         this.currentCommand = commandList;
+        updateVisitorSubscribers();
         changePublisher.notifyObservers();
+    }
+
+    private void updateVisitorSubscribers() {
+        for (CommandVisitorSubscriber subscriber : visitorSubscribers) {
+            subscriber.update(currentCommand);
+        }
     }
 
     /**
@@ -48,6 +63,7 @@ public class DriverCommandManager {
 
     public synchronized void clearCurrentCommand() {
         currentCommand = null;
+        updateVisitorSubscribers();
     }
 
     public synchronized String getCurrentCommandString() {
@@ -57,17 +73,19 @@ public class DriverCommandManager {
             return getCurrentCommand().toString();
     }
 
-//    public synchronized void addVisitor(CommandVisitor<StringBuilder> visitor) {
-//        this.loggingVisitors.add(visitor);
-//    }
+    public synchronized void addVisitor(CommandVisitorSubscriber subscriber) {
+        visitorSubscribers.add(subscriber);
+        subscriber.update(currentCommand);
+    }
 
     public synchronized String getVisitorMessages() {
         StringBuilder result = new StringBuilder();
         if (getCurrentCommand() == null) {
             result.append("No command loaded");
         } else {
-            result.append("Counted Visits: ").append(getCurrentCommand().accept(countingVisitor)).append("\n");
-            result.append("Is Command within Canvas boundaries").append(": ").append(getCurrentCommand().accept(boundaryVisitor)).append("\n");
+            for (CommandVisitorSubscriber subscriber : visitorSubscribers) {
+                result.append(subscriber.getVisitorMessage()).append("\n");
+            }
         }
         return result.toString();
     }
